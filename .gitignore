@@ -1,0 +1,6 @@
+*.o
+*.hex
+*.asm
+*.bin
+*.s
+*.cache
