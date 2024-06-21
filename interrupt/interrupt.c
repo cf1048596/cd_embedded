@@ -128,7 +128,7 @@ short getTrueTemp(long UT)
 {
 	long X1, X2, T; // B5 declared globally
  
-	X1 = (((long)UT-(long)AC6)*(long)AC5)>>15;
+	//X1 = (((long)UT-(long)AC6)*(long)AC5)>>15;
 	X2 = ((long)MC << 11)/(X1 + MD);
 	B5 = X1 + X2;
 	T = (B5+8)>>4;
@@ -166,8 +166,8 @@ long getTruePressure(unsigned long UP)
 	X1 = (AC3 * B6)>>13;
 	X2 = (B1 * ((B6*B6)>>12))>>16;
 	X3 = ((X1+X2)+2)>>2;
-	B4 = (AC4 * (unsigned long)(X3 + 32768))>>15;
-	B7 = ((unsigned long)UP-B3)*(50000>>OSS);
+	//B4 = (AC4 * (unsigned long)(X3 + 32768))>>15;
+	//B7 = ((unsigned long)UP-B3)*(50000>>OSS);
 	if (B7<0x80000000UL) p = (B7<<1)/B4;
 	else p = (B7/B4)<<1;
 	X1 = (p>>8) * (p>>8);

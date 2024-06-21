@@ -1,8 +1,7 @@
-
 build:
 	avr-gcc -Os -DF_CPU=16000000UL -mmcu=atmega328pb -I./pfleury -c -o interrupt.o interrupt.c
 	avr-gcc -Os -DF_CPU=16000000UL -mmcu=atmega328pb -I./pfleury -c -o pfleury/twimaster.o pfleury/twimaster.c
-	avr-gcc -o interrupt.elf interrupt.o pfleury/twimaster.o -lgcc -lm -lc
+	avr-gcc -o interrupt.elf interrupt.o pfleury/twimaster.o -lc -lm 
 	avr-objcopy -O ihex -R .eeprom interrupt.elf interrupt.hex
 
 flash:
