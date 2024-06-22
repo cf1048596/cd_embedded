@@ -66,6 +66,11 @@ int uart_putchar(char c, FILE *stream) {
 
 }
 
+int32_t mul32(int32_t a, int32_t b) {
+  int64_t result = (int64_t)a * (int64_t)b;
+  return (int32_t)(result >> 32);
+}
+
 //interrupt handler routine
 ISR(PCINT0_vect) {
   uint8_t current_pin_state = PINB; // Read the current state of PORTB
@@ -124,16 +129,19 @@ long getUcTemp(void)
 	return UT;
 }
  
-short getTrueTemp(long UT)
-{
-	long X1, X2, T; // B5 declared globally
- 
-	//X1 = (((long)UT-(long)AC6)*(long)AC5)>>15;
-	X2 = ((long)MC << 11)/(X1 + MD);
-	B5 = X1 + X2;
-	T = (B5+8)>>4;
-	return T;
+
+short getTrueTemp(long UT) {
+  long long X1, X2, T; // B5 declared globally
+  // Compute X1
+  X1 = ((long long)(UT - AC6) * (long long)AC5) >> 15;
+  // Compute X2
+  B5 = (short)(X1 + X2);
+  T = (B5 + 8) >> 4;
+  return (short)T;
 }
+
+
+
  
 unsigned long getUcPressure(void)
 {
@@ -153,21 +161,21 @@ unsigned long getUcPressure(void)
 	return UP;
 }
  
-long getTruePressure(unsigned long UP)
+long getTruePressure(int32_t UP)
 {
-	long X1, X2, X3, B3, B6, p; // B5 declared globally.   Must run getTemp() just before getPressure().
-	unsigned long B4, B7;
+	int32_t X1, X2, X3, B3, B6, p; // B5 declared globally.   Must run getTemp() just before getPressure().
+	uint32_t B4, B7;
  
 	B6 = B5 - 4000;
 	X1 = (B2 * (B6 * B6)>>12)>>11;
 	X2 = (AC2 * B6)>>11;
 	X3 = X1 + X2;
-	B3 = (((((long)AC1)*4 + X3)<<OSS)+2)>>2;
+	B3 = (((((int32_t)AC1)*4 + X3)<<OSS)+2)>>2;
 	X1 = (AC3 * B6)>>13;
 	X2 = (B1 * ((B6*B6)>>12))>>16;
 	X3 = ((X1+X2)+2)>>2;
-	//B4 = (AC4 * (unsigned long)(X3 + 32768))>>15;
-	//B7 = ((unsigned long)UP-B3)*(50000>>OSS);
+	B4 = (AC4 * (uint32_t)(X3 + 32768L))>>15;
+	B7 = (UP-B3)*(50000UL>>OSS);
 	if (B7<0x80000000UL) p = (B7<<1)/B4;
 	else p = (B7/B4)<<1;
 	X1 = (p>>8) * (p>>8);
