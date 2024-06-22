@@ -87,8 +87,7 @@ ISR(PCINT0_vect) {
 
 
 
-uint8_t getDataFromBMP180Register(uint8_t loc)
-{
+uint8_t getDataFromBMP180Register(uint8_t loc) {
 	uint8_t data;
  
 	i2c_start_wait(BMP180_WRITE);
@@ -100,8 +99,7 @@ uint8_t getDataFromBMP180Register(uint8_t loc)
 	return data;
 }
  
-void calibrate_bmp180(void)
-{
+void calibrate_bmp180(void) {
 	AC1 = (getDataFromBMP180Register(BMP180_AC1_MSB)<<8) + getDataFromBMP180Register(BMP180_AC1_LSB);
 	AC2 = (getDataFromBMP180Register(BMP180_AC2_MSB)<<8) + getDataFromBMP180Register(BMP180_AC2_LSB);
 	AC3 = (getDataFromBMP180Register(BMP180_AC3_MSB)<<8) + getDataFromBMP180Register(BMP180_AC3_LSB);
@@ -115,17 +113,14 @@ void calibrate_bmp180(void)
 	MD = (getDataFromBMP180Register(BMP180_MD_MSB)<<8) + getDataFromBMP180Register(BMP180_MD_LSB);
 }
  
-long getUcTemp(void)
-{
+long getUcTemp(void) {
 	long UT;
- 
 	i2c_start_wait(BMP180_WRITE);
 	if (i2c_write(0xF4)) i2c_error();
 	if (i2c_write(0x2E)) i2c_error();
 	i2c_stop();
 	_delay_ms(5);
 	UT = ((getDataFromBMP180Register(0xF6))<<8) + (getDataFromBMP180Register(0xF7));
- 
 	return UT;
 }
  
@@ -157,25 +152,22 @@ unsigned long getUcPressure(void)
 	LSB = getDataFromBMP180Register(0xF7);
 	XLSB = getDataFromBMP180Register(0xF8);
 	UP = (((unsigned long)MSB<<16) | ((unsigned long)LSB<<8) | ((unsigned long)XLSB)) >> (8-OSS);
- 
 	return UP;
 }
  
-long getTruePressure(int32_t UP)
-{
-	int32_t X1, X2, X3, B3, B6, p; // B5 declared globally.   Must run getTemp() just before getPressure().
-	uint32_t B4, B7;
- 
+long getTruePressure(int32_t UP) {
+  long X1, X2, X3, B3, B6, p; // B5 declared globally.   Must run getTemp() just before getPressure().
+	unsigned long B4, B7;
 	B6 = B5 - 4000;
 	X1 = (B2 * (B6 * B6)>>12)>>11;
 	X2 = (AC2 * B6)>>11;
 	X3 = X1 + X2;
-	B3 = (((((int32_t)AC1)*4 + X3)<<OSS)+2)>>2;
+	B3 = (((((long)AC1)*4 + X3)<<OSS)+2)>>2;
 	X1 = (AC3 * B6)>>13;
 	X2 = (B1 * ((B6*B6)>>12))>>16;
 	X3 = ((X1+X2)+2)>>2;
-	B4 = (AC4 * (uint32_t)(X3 + 32768L))>>15;
-	B7 = (UP-B3)*(50000UL>>OSS);
+	B4 = (AC4 * (unsigned long)(X3 + 32768))>>15;
+	B7 = ((unsigned long)UP-B3)*(50000>>OSS);
 	if (B7<0x80000000UL) p = (B7<<1)/B4;
 	else p = (B7/B4)<<1;
 	X1 = (p>>8) * (p>>8);
