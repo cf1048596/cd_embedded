@@ -2,7 +2,7 @@ build:
 	avr-gcc -Os -DF_CPU=16000000UL -mmcu=atmega328pb -I./pfleury -c -o interrupt.o interrupt.c
 	avr-gcc -Os -DF_CPU=16000000UL -mmcu=atmega328pb -I./pfleury -c -o pfleury/twimaster.o pfleury/twimaster.c
 	avr-gcc -o interrupt.elf interrupt.o pfleury/twimaster.o -mmcu=atmega328pb
-
+	avr-objcopy -O ihex -R .eeprom blink.bin blink.hex
 build2:
 	avr-gcc -Os -DF_CPU=16000000UL -mmcu=atmega328pb -I./pfleury -c -o interrupt.o interrupt.c
 	avr-gcc -Os -DF_CPU=16000000UL -mmcu=atmega328pb -I./pfleury -c -o pfleury/twimaster.o pfleury/twimaster.c 

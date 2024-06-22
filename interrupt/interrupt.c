@@ -9,7 +9,7 @@
 volatile uint8_t prev_pin_state;
 volatile uint8_t usart_flag;
 
-#define FCPU 160000000UL
+#define FCPU 16000000UL
 #define BAUD 9600
 #define MYUBRR (FCPU/16/BAUD-1)
 
@@ -60,7 +60,7 @@ void i2c_error() {
 
 int uart_putchar(char c, FILE *stream) {
 	if (c == '\n') uart_putchar('\r', stream);
-	loop_until_bit_is_set(UCSR0A, UDRE0);
+	loop_until_bit_is_set(UCSR0A, 128);
 	UDR0 = c;
 	return 0;
 
@@ -210,25 +210,20 @@ void setup() {
 
 void uart_init() {
   //set baud rate
-  UBRR0 = MYUBRR;
+  UBRR0H = (unsigned char)(MYUBRR>>8);
+  UBRR0L = (unsigned char)(MYUBRR);
   //enable receive and transmit of the uart
   UCSR0B = (1<<RXEN0)|(1<<TXEN0);
+  //8data, 2stop bit
+  UCSR0C = (1<<USBS0)|(3<<UCSZ00);
   //change where stdout goes to our one
 	stdout = &mystdout;
-}
-
-void uart_trasmit(unsigned char data) {
-  while ( !( UCSR0A & 32));
-  UDR0 = data;
 }
 
 int main() {
   setup();
   uart_init();
-  sei();
-
   while (1) {
-  cli();
-    printf("fuck you");
+    printf("amogus\n");
   }
 }
