@@ -7,7 +7,8 @@
 #include <avr/interrupt.h>
 
 volatile uint8_t prev_pin_state;
-volatile uint8_t usart_flag;
+volatile uint8_t usart_flag = 0;
+volatile uint32_t press_count = 0;
 
 #define FCPU 16000000UL
 #define BAUD 9600
@@ -45,30 +46,20 @@ unsigned short AC4, AC5, AC6;
 long B5;
 
 
-// Status LED Defines
-#define STATUS_LED_PORT PORTC
-#define STATUS_LED_PIN PORTC3
-
 // setup printf to write to the serial port via usart/uart
 static int uart_putchar(char c, FILE *stream);
 static FILE mystdout = FDEV_SETUP_STREAM(uart_putchar, NULL, _FDEV_SETUP_WRITE);
 
 void i2c_error() {
-	printf( "Unspecified I2C Error. Going into while(1) loop. ");
+	printf( "Unspecified I2C Error. Going into while(1) loop.");
 	while(1);
 }
 
 int uart_putchar(char c, FILE *stream) {
 	if (c == '\n') uart_putchar('\r', stream);
-	loop_until_bit_is_set(UCSR0A, 128);
+	loop_until_bit_is_set(UCSR0A, UDRE0);
 	UDR0 = c;
 	return 0;
-
-}
-
-int32_t mul32(int32_t a, int32_t b) {
-  int64_t result = (int64_t)a * (int64_t)b;
-  return (int32_t)(result >> 32);
 }
 
 //interrupt handler routine
@@ -76,9 +67,10 @@ ISR(PCINT0_vect) {
   uint8_t current_pin_state = PINB; // Read the current state of PORTB
 
   // Check if PCINT7 (PB7) triggered the interrupt
-  if ((current_pin_state & 128) != (prev_pin_state & 128)) {
-    PORTB ^= 32;
-    usart_flag ^= 1;
+  if ((current_pin_state & 128) != (prev_pin_state & 128) != 0 && (PINB & 128)) {
+    PORTB ^= (1 << PB5); // Toggle LED
+    usart_flag = 1;
+    press_count++;
   }
 
   // Update the previous pin state
@@ -86,20 +78,17 @@ ISR(PCINT0_vect) {
 }
 
 
-
 uint8_t getDataFromBMP180Register(uint8_t loc) {
 	uint8_t data;
- 
 	i2c_start_wait(BMP180_WRITE);
 	i2c_write(loc);
 	i2c_rep_start(BMP180_READ);
 	data = i2c_readNak();
 	i2c_stop();
- 
 	return data;
 }
  
-void calibrate_bmp180(void) {
+void calibrate_bmp180() {
 	AC1 = (getDataFromBMP180Register(BMP180_AC1_MSB)<<8) + getDataFromBMP180Register(BMP180_AC1_LSB);
 	AC2 = (getDataFromBMP180Register(BMP180_AC2_MSB)<<8) + getDataFromBMP180Register(BMP180_AC2_LSB);
 	AC3 = (getDataFromBMP180Register(BMP180_AC3_MSB)<<8) + getDataFromBMP180Register(BMP180_AC3_LSB);
@@ -111,6 +100,7 @@ void calibrate_bmp180(void) {
 	MB = (getDataFromBMP180Register(BMP180_MB_MSB)<<8) + getDataFromBMP180Register(BMP180_MB_LSB);
 	MC = (getDataFromBMP180Register(BMP180_MC_MSB)<<8) + getDataFromBMP180Register(BMP180_MC_LSB);
 	MD = (getDataFromBMP180Register(BMP180_MD_MSB)<<8) + getDataFromBMP180Register(BMP180_MD_LSB);
+	AC1 = (getDataFromBMP180Register(BMP180_AC1_MSB)<<8) + getDataFromBMP180Register(BMP180_AC1_LSB);
 }
  
 long getUcTemp(void) {
@@ -142,7 +132,6 @@ unsigned long getUcPressure(void)
 {
 	unsigned long UP;
 	unsigned char MSB, LSB, XLSB;
- 
 	i2c_start_wait(BMP180_WRITE);
 	if (i2c_write(0xF4)) i2c_error();
 	if (i2c_write(0x34+(OSS<<6))) i2c_error();
@@ -195,6 +184,7 @@ long getAltitude(void) {
 void setup() {
   // Set PB5 as output
   DDRB |= 128;
+  DDRC |= 16;
 
   // Set PB7 as input with internal pull-up resistor
   PORTB |= 128;
@@ -206,24 +196,37 @@ void setup() {
   PCMSK0 |= 128;
   // Enable pin change interrupts for PCINT0 vector
   PCICR |= 1;
+  PORTC |= 16;
 }
 
 void uart_init() {
-  //set baud rate
+  //set baud rate to 9600
   UBRR0H = (unsigned char)(MYUBRR>>8);
   UBRR0L = (unsigned char)(MYUBRR);
   //enable receive and transmit of the uart
   UCSR0B = (1<<RXEN0)|(1<<TXEN0);
   //8data, 2stop bit
   UCSR0C = (1<<USBS0)|(3<<UCSZ00);
-  //change where stdout goes to our one
+  //change where stdout goes to our/init printf
 	stdout = &mystdout;
 }
 
 int main() {
   setup();
   uart_init();
+  calibrate_bmp180();
+  sei();
+  cli();
   while (1) {
-    printf("amogus\n");
+    if (usart_flag==1) {
+      cli();
+      printf("pin state change interrupt triggered. Count: %d\n", press_count);
+      printf( "Temperature in degrees C: %d\n ", getTemp());
+      printf( "Pressure in Pa: %ld\n ", getPressure());
+      printf( "Altitude in ft: %ld\n\n ", getAltitude());
+      usart_flag = 0;
+      _delay_ms(1000);
+      sei();
+    }
   }
 }

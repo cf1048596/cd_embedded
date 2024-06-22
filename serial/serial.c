@@ -15,8 +15,8 @@ static FILE mystdout = FDEV_SETUP_STREAM(uart_putchar, NULL, _FDEV_SETUP_WRITE);
 
 int uart_putchar(char c, FILE *stream) {
 	if (c == '\n') uart_putchar('\r', stream);
-  while ( !( UCSR0A & (1<<UDRE0)) )
-	UDR0 = c; _delay_us(100);
+	loop_until_bit_is_set(UCSR0A, UDRE0);
+	UDR0 = c;
 	return 0;
 }
 
@@ -29,13 +29,13 @@ void uart_init() {
   //8data, 2stop bit
   UCSR0C = (1<<USBS0)|(3<<UCSZ00);
   //change where stdout goes to our one
-	//stdout = &mystdout;
+	stdout = &mystdout;
 }
 
 int main() {
   uart_init();
   while (1) {
-    UDR0 = 'a';
+    printf("amogus\n");
     _delay_ms(250);
   }
 }
