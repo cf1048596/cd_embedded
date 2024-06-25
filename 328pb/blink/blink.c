@@ -3,9 +3,9 @@
 #include <util/delay.h>
 
 int main() {
-  DDRB = DDRB | (1 << DDB5);
+  DDRB |=32;
   while(1){
     //turn pin ON
-    PORTB = PORTB | (1 << PORTB5);
+    PORTB |=32;
   }
 }

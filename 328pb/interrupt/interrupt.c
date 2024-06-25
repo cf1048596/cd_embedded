@@ -51,7 +51,7 @@ static int uart_putchar(char c, FILE *stream);
 static FILE mystdout = FDEV_SETUP_STREAM(uart_putchar, NULL, _FDEV_SETUP_WRITE);
 
 void i2c_error() {
-	printf( "Unspecified I2C Error. Going into while(1) loop.");
+  printf( "Unspecified I2C Error. Going into while(1) loop.");
 	while(1);
 }
 
@@ -72,16 +72,15 @@ ISR(PCINT0_vect) {
     usart_flag = 1;
     press_count++;
   }
-
   // Update the previous pin state
   prev_pin_state = current_pin_state;
 }
 
 
-uint8_t getDataFromBMP180Register(uint8_t loc) {
+uint8_t getDataFromBMP180Register(uint8_t dev_register) {
 	uint8_t data;
 	i2c_start_wait(BMP180_WRITE);
-	i2c_write(loc);
+	i2c_write(dev_register);
 	i2c_rep_start(BMP180_READ);
 	data = i2c_readNak();
 	i2c_stop();
@@ -175,7 +174,7 @@ short getTemp(void) {
 }
  
 long getAltitude(void) {
-	static long SLP = 101020; // Pa (get from local airport altimeter setting)
+	static long SLP = 101020; // Pa (get from dev_registeral airport altimeter setting)
 	long altitude;
 	altitude = (float)44330 * (1-pow((float)getPressure()/SLP, (1/5.255)));
 	return (long)altitude;
