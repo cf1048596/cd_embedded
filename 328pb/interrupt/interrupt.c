@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <util/twi.h>
-#include "pfleury/i2cmaster.h"
+#include "i2cmaster.h"
 #include <avr/interrupt.h>
 
 volatile uint8_t prev_pin_state;

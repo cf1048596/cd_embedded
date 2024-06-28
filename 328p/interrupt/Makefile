@@ -5,7 +5,7 @@ build:
 	avr-objcopy -O ihex -R .eeprom interrupt.bin interrupt.hex
 
 flash:
-	sudo avrdude -F -c arduino -p m328p -b 115200 -U flash:w:interrupt.hex
+	sudo avrdude -F -c arduino -p m328p -P /dev/ttyACM0 -b 115200 -U flash:w:interrupt.hex
 
 show:
 	avr-gcc -Os -DF_CPU=16000000UL -mmcu=atmega328p -I./pfleury -S -o interrupt.s interrupt.c
