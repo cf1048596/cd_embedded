@@ -15,7 +15,7 @@ Description:
 #include "i2cmaster.h"
 
 
-#define Dev24C02  0x77      // device address of EEPROM 24C02, see datasheet
+#define Dev24C02  0xA2      // device address of EEPROM 24C02, see datasheet
 
 
 int main(void)

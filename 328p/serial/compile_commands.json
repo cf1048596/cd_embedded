@@ -1,0 +1,17 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/avr-gcc",
+      "-Os",
+      "-DF_CPU=16000000UL",
+      "-mmcu=atmega328pb",
+      "-c",
+      "-o",
+      "serial.o",
+      "serial.c"
+    ],
+    "directory": "/home/christian/embedded/serial",
+    "file": "/home/christian/embedded/serial/serial.c",
+    "output": "/home/christian/embedded/serial/serial.o"
+  }
+]
