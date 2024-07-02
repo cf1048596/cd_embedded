@@ -1,10 +1,9 @@
 #include <stdint.h>
 #include <util/delay.h>
+#include <avr/io.h>
 #include <math.h>
 #include <stdio.h>
-#include <util/twi.h>
-#include "pfleury/i2cmaster.h"
-#include <avr/interrupt.h>
+#include "i2cmaster.h"
 
 volatile uint8_t prev_pin_state;
 volatile uint8_t usart_flag = 0;
@@ -61,21 +60,6 @@ int uart_putchar(char c, FILE *stream) {
 	UDR0 = c;
 	return 0;
 }
-
-//interrupt handler routine
-ISR(PCINT0_vect) {
-  uint8_t current_pin_state = PINB; // Read the current state of PORTB
-
-  // Check if PCINT7 (PB7) triggered the interrupt
-  if ((current_pin_state & 128) != (prev_pin_state & 128) != 0 && (PINB & 128)) {
-    PORTB ^= (1 << PB5); // Toggle LED
-    usart_flag = 1;
-    press_count++;
-  }
-  // Update the previous pin state
-  prev_pin_state = current_pin_state;
-}
-
 
 uint8_t getDataFromBMP180Register(uint8_t dev_register) {
 	uint8_t data;
@@ -210,11 +194,9 @@ void uart_init() {
 
 int main() {
   uart_init();
-  calibrate_bmp180();
+  printf("please work\n");
+  int num = getDataFromBMP180Register(0xD0);
+  printf("chip id: %d\n", num);
   while (1) {
-    printf("Temperature in degrees C: %d\n ", getTemp());
-    printf("Pressure in Pa: %ld\n ", getPressure());
-    printf("Altitude in ft: %ld\n\n ", getAltitude());
-    _delay_ms(1000);
   }
 }

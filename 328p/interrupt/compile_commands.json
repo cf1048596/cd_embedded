@@ -4,14 +4,15 @@
       "/usr/bin/avr-gcc",
       "-Os",
       "-DF_CPU=16000000UL",
-      "-mmcu=atmega328pb",
+      "-mmcu=atmega328p",
+      "-I./pfleury",
       "-c",
       "-o",
-      "blink.o",
-      "blink.c"
+      "interrupt.o",
+      "interrupt.c"
     ],
-    "directory": "/home/christian/embedded/blink",
-    "file": "/home/christian/embedded/blink/blink.c",
-    "output": "/home/christian/embedded/blink/blink.o"
+    "directory": "/home/christian/embedded/328p/interrupt",
+    "file": "/home/christian/embedded/328p/interrupt/interrupt.c",
+    "output": "/home/christian/embedded/328p/interrupt/interrupt.o"
   }
 ]

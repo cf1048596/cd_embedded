@@ -123,8 +123,7 @@ short getTrueTemp(long UT) {
   return (short)T;
 }
  
-unsigned long getUcPressure(void)
-{
+unsigned long getUcPressure(void) {
 	unsigned long UP;
 	unsigned char MSB, LSB, XLSB;
 	i2c_start_wait(BMP180_WRITE);
@@ -209,12 +208,11 @@ void uart_init() {
 }
 
 int main() {
+  i2c_init();
   uart_init();
-  calibrate_bmp180();
+  int num = getDataFromBMP180Register(0xD0);
   while (1) {
-    printf("Temperature in degrees C: %d\n ", getTemp());
-    printf("Pressure in Pa: %ld\n ", getPressure());
-    printf("Altitude in ft: %ld\n\n ", getAltitude());
+    printf("chip id: %d\n", num);
     _delay_ms(1000);
   }
 }
