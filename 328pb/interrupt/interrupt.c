@@ -103,9 +103,10 @@ void calibrate_bmp180() {
  
 long getUcTemp(void) {
 	long UT;
-	i2c_start_wait(BMP180_WRITE);
-	if (i2c_write(0xF4)) i2c_error();
-	if (i2c_write(0x2E)) i2c_error();
+	i2c_start_wait(0xEE);
+	i2c_write(0xF4);
+	i2c_write(0x2E);
+
 	i2c_stop();
 	_delay_ms(5);
 	UT = ((getDataFromBMP180Register(0xF6))<<8) + (getDataFromBMP180Register(0xF7));
@@ -113,14 +114,13 @@ long getUcTemp(void) {
 }
  
 
-short getTrueTemp(long UT) {
-  long long X1, X2, T; // B5 declared globally
-  // Compute X1
-  X1 = ((long long)(UT - AC6) * (long long)AC5) >> 15;
-  // Compute X2
-  B5 = (short)(X1 + X2);
-  T = (B5 + 8) >> 4;
-  return (short)T;
+float getTrueTemp(long UT) {
+  long X1, X2, T; // B5 declared globally
+	X1 = (((long)UT-(long)AC6)*(long)AC5)>>15;
+	X2 = ((long)MC << 11)/(X1 + MD);
+	B5 = X1 + X2;
+	T = (float)((B5+8)>>4)/10;
+	return T;
 }
  
 unsigned long getUcPressure(void) {
@@ -134,11 +134,11 @@ unsigned long getUcPressure(void) {
 	MSB = getDataFromBMP180Register(0xF6);
 	LSB = getDataFromBMP180Register(0xF7);
 	XLSB = getDataFromBMP180Register(0xF8);
-	UP = (((unsigned long)MSB<<16) | ((unsigned long)LSB<<8) | ((unsigned long)XLSB)) >> (8-OSS);
+	UP = (((unsigned long)MSB<<16) + ((unsigned long)LSB<<8) + ((unsigned long)XLSB)) >> (8-OSS);
 	return UP;
 }
  
-long getTruePressure(int32_t UP) {
+long getTruePressure(int32_t uncalibrated_pressure) {
   long X1, X2, X3, B3, B6, p; // B5 declared globally.   Must run getTemp() just before getPressure().
 	unsigned long B4, B7;
 	B6 = B5 - 4000;
@@ -150,7 +150,7 @@ long getTruePressure(int32_t UP) {
 	X2 = (B1 * ((B6*B6)>>12))>>16;
 	X3 = ((X1+X2)+2)>>2;
 	B4 = (AC4 * (unsigned long)(X3 + 32768))>>15;
-	B7 = ((unsigned long)UP-B3)*(50000>>OSS);
+	B7 = ((unsigned long)uncalibrated_pressure-B3)*(50000>>OSS);
 	if (B7<0x80000000UL) p = (B7<<1)/B4;
 	else p = (B7/B4)<<1;
 	X1 = (p>>8) * (p>>8);
@@ -169,9 +169,9 @@ short getTemp(void) {
 }
  
 long getAltitude(void) {
-	static long SLP = 101020; // Pa (get from dev_registeral airport altimeter setting)
+	static long SLP = 101325; // Pa (get from dev_registeral airport altimeter setting)
 	long altitude;
-	altitude = (float)44330 * (1-pow((float)getPressure()/SLP, (1/5.255)));
+	altitude = (float)44330 * (pow(((float)getPressure()/SLP), (1/5.255))) - 44330;
 	return (long)altitude;
 }
 
@@ -210,9 +210,13 @@ void uart_init() {
 int main() {
   i2c_init();
   uart_init();
-  int num = getDataFromBMP180Register(0xD0);
+  calibrate_bmp180();
+  int chip_id = getDataFromBMP180Register(0xD0);
+  printf("chip id: %d\n", chip_id);
   while (1) {
-    printf("chip id: %d\n", num);
+    printf("Temperature in degrees C: %d\n", getTemp());
+    printf("Pressure in Pa: %ld\n", getPressure());
+    printf("Altitude in metres: %ld\n", getAltitude());
     _delay_ms(1000);
   }
 }
